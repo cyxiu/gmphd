@@ -43,51 +43,51 @@ transnmatrix = transntypes[transntype]
 birthintensity1 = birthprob / len(birthgmm)
 print "birthgmm: each component has weight %g" % birthintensity1
 for comp in birthgmm:
-	comp.weight = birthintensity1
+    comp.weight = birthintensity1
 
 rocpoints = {}
 for obsntype in obsntypenames:
-	obsnmatrix = obsntypes[obsntype]['obsnmatrix']
-	directlystatetospec = dot(obsntypes[obsntype]['obstospec'], obsnmatrix)
-	clutterintensity = clutterintensityfromtot(clutterintensitytot, obsntype)
-	print "clutterintensity: %g" % clutterintensity
-	rocpoints[obsntype] = [(0,0)]
+    obsnmatrix = obsntypes[obsntype]['obsnmatrix']
+    directlystatetospec = dot(obsntypes[obsntype]['obstospec'], obsnmatrix)
+    clutterintensity = clutterintensityfromtot(clutterintensitytot, obsntype)
+    print "clutterintensity: %g" % clutterintensity
+    rocpoints[obsntype] = [(0,0)]
 
-	# NOTE: all the runs are appended into one long "results" array! Can calc the roc point in one fell swoop, no need to hold separate.
-	# So, we concatenate one separate resultlist for each bias type.
-	# Then when we come to the end we calculate a rocpoint from each resultlist.
-	results = { bias: [] for bias in biases }
+    # NOTE: all the runs are appended into one long "results" array! Can calc the roc point in one fell swoop, no need to hold separate.
+    # So, we concatenate one separate resultlist for each bias type.
+    # Then when we come to the end we calculate a rocpoint from each resultlist.
+    results = { bias: [] for bias in biases }
 
-	for whichrun in range(nruns):
-		print "===============================obsntype %s, run %i==============================" % (obsntype, whichrun)
-		### Initialise the true state and the model:
-		trueitems = []
-		g = Gmphd(birthgmm, survivalprob, 0.7, transnmatrix, 1e-9 * array([[1,0,0], [0,1,0], [0,0,1]]), 
-				obsnmatrix, obsntypes[obsntype]['noisecov'], clutterintensity)
+    for whichrun in range(nruns):
+        print "===============================obsntype %s, run %i==============================" % (obsntype, whichrun)
+        ### Initialise the true state and the model:
+        trueitems = []
+        g = Gmphd(birthgmm, survivalprob, 0.7, transnmatrix, 1e-9 * array([[1,0,0], [0,1,0], [0,0,1]]),
+                obsnmatrix, obsntypes[obsntype]['noisecov'], clutterintensity)
 
-		for whichiter in range(niters):
-			print "--%i----------------------------------------------------------------------" % whichiter
-			# the "real" state evolves
-			trueitems = updatetrueitems(trueitems, survivalprob, birthprob, obsnmatrix, transnmatrix)
-			# we make our observations of it
-			(obsset, groundtruth) = getobservations(trueitems, clutterintensitytot, obsntype, directlystatetospec, detectprob)
-			print "OBSSET sent to g.update():"
-			print obsset
-			# we run our inference using the observations
-			updateandprune(g, obsset)
+        for whichiter in range(niters):
+            print "--%i----------------------------------------------------------------------" % whichiter
+            # the "real" state evolves
+            trueitems = updatetrueitems(trueitems, survivalprob, birthprob, obsnmatrix, transnmatrix)
+            # we make our observations of it
+            (obsset, groundtruth) = getobservations(trueitems, clutterintensitytot, obsntype, directlystatetospec, detectprob)
+            print "OBSSET sent to g.update():"
+            print obsset
+            # we run our inference using the observations
+            updateandprune(g, obsset)
 
-			for bias in biases:
-				resultdict = collateresults(g, obsset, bias, obsntype, directlystatetospec, trueitems, groundtruth)
-				results[bias].append(resultdict)
+            for bias in biases:
+                resultdict = collateresults(g, obsset, bias, obsntype, directlystatetospec, trueitems, groundtruth)
+                results[bias].append(resultdict)
 
-	for bias in biases:
-		gt = [moment['groundtruth'] for moment in results[bias]]
-		ob = [moment['estspec']     for moment in results[bias]]
-		rocpoints[obsntype].append(calcroc(gt, ob))
-		print "rocpoints"
-		print rocpoints
+    for bias in biases:
+        gt = [moment['groundtruth'] for moment in results[bias]]
+        ob = [moment['estspec']     for moment in results[bias]]
+        rocpoints[obsntype].append(calcroc(gt, ob))
+        print "rocpoints"
+        print rocpoints
 
-	rocpoints[obsntype].append((1,1))
+    rocpoints[obsntype].append((1,1))
 
 ###############################################################
 # plot the results

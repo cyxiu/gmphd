@@ -48,7 +48,7 @@ directlystatetospec001 = array([[0., 0., 1.]])
 birthintensity1 = birthprob / len(birthgmm)
 print "birthgmm: each component has weight %g" % birthintensity1
 for comp in birthgmm:
-	comp.weight = birthintensity1
+    comp.weight = birthintensity1
 
 clutterintensity = clutterintensityfromtot(clutterintensitytot, obsntype)
 print "clutterintensity: %g" % clutterintensity
@@ -56,31 +56,31 @@ print "clutterintensity: %g" % clutterintensity
 ### Create the "true" state and the model:
 trueitems = [TrackableThing(obsnmatrix, transnmatrix) for _ in range(initcount)]
 if initcount != 0:
-	print "True states at init:"
-	for item in trueitems:
-		print list(item.state.T)
+    print "True states at init:"
+    for item in trueitems:
+        print list(item.state.T)
 
 g = Gmphd(birthgmm, survivalprob, 0.7, transnmatrix, 1e-9 * array([[1,0,0], [0,1,0], [0,0,1]]), obsnmatrix, obsntypes[obsntype]['noisecov'], clutterintensity)
 
 ###############################################################
 results = []
 for whichiter in range(niters):
-	print "--%i----------------------------------------------------------------------" % whichiter
-	# the "real" state evolves
-	trueitems = updatetrueitems(trueitems, survivalprob, birthprob, obsnmatrix, transnmatrix)
-	# we make our observations of it
-	(obsset, groundtruth) = getobservations(trueitems, clutterintensitytot, obsntype, directlystatetospec, detectprob)
-	print "OBSSET sent to g.update():"
-	print obsset
-	# we run our inference using the observations
-	updateandprune(g, obsset)
-	resultdict = collateresults(g, obsset, bias, obsntype, directlystatetospec, trueitems, groundtruth)
+    print "--%i----------------------------------------------------------------------" % whichiter
+    # the "real" state evolves
+    trueitems = updatetrueitems(trueitems, survivalprob, birthprob, obsnmatrix, transnmatrix)
+    # we make our observations of it
+    (obsset, groundtruth) = getobservations(trueitems, clutterintensitytot, obsntype, directlystatetospec, detectprob)
+    print "OBSSET sent to g.update():"
+    print obsset
+    # we run our inference using the observations
+    updateandprune(g, obsset)
+    resultdict = collateresults(g, obsset, bias, obsntype, directlystatetospec, trueitems, groundtruth)
 
-	# also manually grab a version using the 001 matrix, for the paper:
-	resultdict001 = collateresults(g, obsset, bias, obsntype, directlystatetospec001, trueitems, groundtruth)
-	resultdict['estspec001']     = resultdict001['estspec']
+    # also manually grab a version using the 001 matrix, for the paper:
+    resultdict001 = collateresults(g, obsset, bias, obsntype, directlystatetospec001, trueitems, groundtruth)
+    resultdict['estspec001']     = resultdict001['estspec']
 
-	results.append(resultdict)
+    results.append(resultdict)
 
 ###############################################################
 # plot the results
